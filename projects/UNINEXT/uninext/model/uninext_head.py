@@ -163,8 +163,8 @@ class UNINEXTHead(BaseModule):
             nn.init.xavier_uniform_(contr.weight)
             nn.init.zeros_(contr.bias)
 
-    def foward_mask_head(self, feats, spatial_shapes, reference_points,
-                         mask_head_params, num_insts):
+    def forward_mask_head(self, feats, spatial_shapes, reference_points,
+                          mask_head_params, num_insts):
         bs, _, c = feats.shape
 
         encod_feat_l = []
@@ -431,9 +431,9 @@ class UNINEXTHead(BaseModule):
             1, -1, dynamic_mask_head_params.shape[-1])
 
         spatial_shapes = src_info_dict['src_spatial_shapes']
-        outputs_masks = self.foward_mask_head(memory, spatial_shapes,
-                                              reference_points,
-                                              mask_head_params, num_insts)
+        outputs_masks = self.forward_mask_head(memory, spatial_shapes,
+                                               reference_points,
+                                               mask_head_params, num_insts)
         outputs_masks = torch.cat(outputs_masks, dim=0)
         # not support two_stage yet
         return outputs_class, outputs_coord, \

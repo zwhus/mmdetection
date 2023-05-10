@@ -562,8 +562,6 @@ class UNINEXT_VID(DeformableDETR):
             captions[0:1], device=inputs.device)
 
         for frame_id in range(video_len):
-            # if frame_id == 21:
-            #     print("hhh")
             img_data_sample = track_data_sample[frame_id]
             img_data_sample.set_metainfo({'frame_id': frame_id})
             single_img = inputs[:, frame_id].contiguous()  # (B, C, H, W)
@@ -583,69 +581,6 @@ class UNINEXT_VID(DeformableDETR):
                 batch_data_samples=[img_data_sample],
                 rescale=rescale)
             img_data_sample.pred_instances = pred_det_ins_list[0]
-            pred_track_instances = self.tracker.track(
-                data_sample=img_data_sample, rescale=rescale)
-            img_data_sample.pred_track_instances = pred_track_instances
-
-        return [track_data_sample]
-
-    def forward(self,
-                inputs: Dict[str, Tensor],
-                data_samples: TrackSampleList,
-                rescale: bool = True) -> TrackSampleList:
-        """Predict results from a video and data samples with post-processing.
-
-        Args:
-            inputs (Tensor): of shape (N, T, C, H, W) encoding
-                input images. The N denotes batch size.
-                The T denotes the number of frames in a video.
-            data_samples (list[:obj:`TrackDataSample`]): The batch
-                data samples. It usually includes information such
-                as `video_data_samples`.
-        Returns:
-            TrackSampleList: Tracking results of the inputs.
-        """
-        assert inputs.dim() == 5, 'The img must be 5D Tensor (N, T, C, H, W).'
-        assert inputs.size(0) == 1, \
-            'UNINEXT inference only support ' \
-            '1 batch size per gpu for now.'
-
-        assert len(data_samples) == 1, \
-            'UNINEXT inference only support 1 batch size per gpu for now.'
-
-        track_data_sample = data_samples[0]
-        video_len = len(track_data_sample)
-
-        captions = [
-            track_data_sample[frame_id]['expressions']
-            for frame_id in range(video_len)
-        ]
-        assert len(set(captions)) == 1
-        language_dict_features = self.forward_text(
-            captions[0:1], device=inputs.device)
-
-        for frame_id in range(video_len):
-            if frame_id == 21:
-                print('hhh')
-            img_data_sample = track_data_sample[frame_id]
-            single_img = inputs[:, frame_id].contiguous()  # (B, C, H, W)
-            positive_map_label_to_token = \
-                img_data_sample.gt_instances.positive_map_label_to_token
-            num_classes = len(positive_map_label_to_token)
-            language_dict_features_cur = copy.deepcopy(language_dict_features)
-
-            img_feats = self.extract_feat(single_img)
-            result = self.forward_transformer(img_feats,
-                                              language_dict_features_cur,
-                                              [img_data_sample])
-            pred_det_ins_list = self.bbox_head.predict(
-                **result,
-                positive_map_label_to_token=positive_map_label_to_token,
-                num_classes=num_classes,
-                data_samples=[img_data_sample],
-                rescale=rescale)
-            img_data_sample.pred_instances = pred_det_ins_list[0]
-
             pred_track_instances = self.tracker.track(
                 data_sample=img_data_sample, rescale=rescale)
             img_data_sample.pred_track_instances = pred_track_instances
